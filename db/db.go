@@ -1,10 +1,14 @@
-package main
+package db
 
 import (
 	"github.com/jmoiron/sqlx"
 )
 
-func initSchema(db *sqlx.DB) error {
+type DB struct {
+	lib *sqlx.DB
+}
+
+func (db *DB) InitSchema() error {
 
 	var schema = `
     	CREATE TABLE fibonaci (
@@ -14,7 +18,7 @@ func initSchema(db *sqlx.DB) error {
         );
 		CREATE UNIQUE INDEX ordinal_index ON fibonaci(ordinal);
 		`
-	_, err := db.Exec(schema)
+	_, err := db.lib.Exec(schema)
 	return err
 }
 
@@ -23,12 +27,12 @@ type fibonaciEntry struct {
 	Value   int64
 }
 
-func createFibonaciEntry(ordinal, value uint64, db *sqlx.DB) error {
+func (db *DB) CreateFibonaciEntry(ordinal, value uint64) error {
 	f := &fibonaciEntry{
 		Ordinal: int64(ordinal),
 		Value:   int64(value),
 	}
-	_, err := db.NamedExec(
+	_, err := db.lib.NamedExec(
 		`INSERT INTO fibonaci
 		(ordinal, value)
 		VALUES (:ordinal, :value)`,
@@ -37,16 +41,25 @@ func createFibonaciEntry(ordinal, value uint64, db *sqlx.DB) error {
 	return err
 }
 
-func updateFibonaciEntry(ordinal, value uint64, db *sqlx.DB) error {
+func (db *DB) UpdateFibonaciEntry(ordinal, value uint64) error {
 	f := &fibonaciEntry{
 		Ordinal: int64(ordinal),
 		Value:   int64(value),
 	}
-	_, err := db.NamedExec(
+	_, err := db.lib.NamedExec(
 		`UPDATE fibonaci SET
 			ordinal=:ordinal,
 			value=:value`,
 		f,
 	)
 	return err
+}
+
+func (db *DB) InitDatabase(dbconnect string) {
+	var err error
+	//LOG(dbconnect)
+	db.lib, err = sqlx.Connect("postgres", dbconnect)
+	if err != nil {
+		panic("Opening DB: " + err.Error())
+	}
 }
