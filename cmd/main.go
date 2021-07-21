@@ -4,13 +4,14 @@ import (
 	"flag"
 	"github.com/StCredZero/rsrvtrst_thing/db"
 	"github.com/StCredZero/rsrvtrst_thing/fib"
-	"log"
+	"github.com/StCredZero/rsrvtrst_thing/webserver"
 )
 
 type FibApp struct {
 	dbconnect string
 	db *db.DB
 	fib *fib.Fibber
+	srv *webserver.Server
 }
 
 func (app *FibApp) initApp() {
@@ -30,13 +31,14 @@ func (app *FibApp) initApp() {
 	app.db.InitDatabase(*dbconnect)
 
 	app.fib = fib.NewFibber()
+	app.fib.Initialize()
+
+	app.srv = new(webserver.Server)
+	app.srv.Fibber = app.fib
 }
 
 func main() {
-
 	app := new(FibApp)
 	app.initApp()
-	initEvApp(&evApp)
-	go evApp.server.serverLoop()
-	initWebserver(&evApp)
+	app.srv.Start()
 }
