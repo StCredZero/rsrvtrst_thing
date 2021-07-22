@@ -31,6 +31,24 @@ The paths below correspond to the 3 functions:
 "/clear"
 ```
 
+To test from the command line using curl:
+
+```
+curl http://127.0.0.1:8080/ordinal/20
+curl http://127.0.0.1:8080/cardinality_less/20
+curl http://127.0.0.1:8080/clear
+```
+
+Replies are returned as plain text. No provision was made to enforce GET/POST/etc.
+
+## Database
+
+If one wishes to query the database, use the command below with password 'secret123':
+
+```
+psql -h localhost -U fib_app -d fib_db
+```
+
 ## Architecture
 
 I am simply using golang as a cache, while storing the sequence values in the database.
