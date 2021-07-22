@@ -4,7 +4,8 @@
 
 ## Build and run
 
-We are assuming that postgresql server and golang are already installed. 
+This app was developed on Debian Buster. We are assuming that postgresql server and golang are already 
+installed. 
 
 [Golang download and installation instructions][https://golang.org/dl/]
 
