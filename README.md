@@ -57,7 +57,10 @@ psql -h localhost -U fib_app -d fib_db
 
 ## Architecture
 
-I am simply using golang as a cache, while storing the sequence values in the database.
+I am simply using golang as a cache, while storing the sequence values in the database. The app is currently 
+designed as a single process multi-threaded server. Only one server can cover any given interval of the domain of 
+ordinals. Therefore, to scale to multiple servers, by sharding, there would have to be modifications as discussed 
+below. That said, this server should be quite fast.
 
 It's hard to apply architecture including persistence to such a toy problem. For one thing, Binet's formula 
 with an extended precision math library, makes any persistence redundant:
