@@ -17,6 +17,12 @@ make install-db
 make run
 ```
 
+Unit test suite can be run with:
+
+```
+make test
+```
+
 ## API
 
 The paths below correspond to the 3 functions:
