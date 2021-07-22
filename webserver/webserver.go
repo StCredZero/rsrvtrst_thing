@@ -11,7 +11,7 @@ import (
 )
 
 type Server struct {
-	mux *mux.Router
+	mux    *mux.Router
 	Fibber *fib.Fibber
 }
 
@@ -30,7 +30,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 func makeFunctionHandler(varname string, fn func(n uint64) uint64) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		inputString := mux.Vars(req)[varname]
-		input, err :=strconv.ParseUint(inputString, 10, 64)
+		input, err := strconv.ParseUint(inputString, 10, 64)
 		if err != nil {
 			respondWithError(rw, http.StatusInternalServerError, err.Error())
 		} else {
@@ -52,11 +52,10 @@ func (s *Server) Start() {
 	s.mux = mux.NewRouter()
 	s.mux.PathPrefix("/ordinal/{ordinal_n}").Handler(makeFunctionHandler("ordinal_n", s.Fibber.FibonaciOrdinal))
 	s.mux.PathPrefix("/cardinality_less/{cardinality_x}").Handler(makeFunctionHandler("cardinality_x", s.Fibber.CardinalityLessThan))
-	s.mux.PathPrefix("/clear").Handler(makeClearHandler(s.Fibber.Initialize))
+	s.mux.PathPrefix("/clear").Handler(makeClearHandler(s.Fibber.Clear))
 
-	err := http.ListenAndServe(":8080", s.mux.Router)
+	err := http.ListenAndServe(":8080", s.mux)
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
 }
-

@@ -3,3 +3,4 @@
 sudo su - postgres -c "createuser fib_app"
 sudo su - postgres -c "createdb fib_db"
 sudo -u postgres psql -U postgres -d fib_db -c "GRANT ALL PRIVILEGES ON DATABASE fib_db TO fib_app"
+sudo -u postgres psql -U postgres -d fib_db -c "ALTER ROLE fib_app WITH PASSWORD 'secret123';"

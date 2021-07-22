@@ -1,6 +1,9 @@
 package fib
 
-import "sync"
+import (
+	"github.com/StCredZero/rsrvtrst_thing/db"
+	"sync"
+)
 
 const (
 	InstantIter = 10000 // 10000 is a good default value, for a number of iterations runnable by a system, "instantly"
@@ -11,24 +14,44 @@ type Fibber struct {
 	cache  map[uint64]uint64
 	maxN   uint64
 	maxFib uint64
+	DB     *db.DB
 }
 
-func NewFibber() *Fibber {
+func NewFibber(db *db.DB) *Fibber {
 	f := new(Fibber)
-	f.Initialize()
+	f.DB = db
 	return f
 }
 
-// Initialize synchronized to be reused to clear cache
-func (f *Fibber) Initialize() {
+// Clear synchronized to be reused to clear cache
+func (f *Fibber) Clear() {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	f.DB.DropTable()
+	f.DB.InitSchema()
+
+	f.cache = make(map[uint64]uint64)
+    f.cache[0] = 0
+    f.cache[1] = 1
+	f.maxN = 1
+	f.maxFib = 1
+}
+
+func (f *Fibber) RetrieveData() {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
 	f.cache = make(map[uint64]uint64)
-	f.cache[0] = 0
-	f.cache[1] = 1
-	f.maxN = 1
-	f.maxFib = 1
+	f.DB.RetrieveData(func(ordinal, value uint64) {
+		f.cache[ordinal] = value
+		if ordinal > f.maxN {
+			f.maxN = ordinal
+		}
+		if value > f.maxFib {
+			f.maxFib = value
+		}
+	})
 }
 
 // SyncGetCached synchronized method got getting cached result
@@ -40,16 +63,24 @@ func (f *Fibber) SyncGetCached(n uint64) (uint64, bool) {
 	return fib, ok
 }
 
-// SyncGetCached synchronized method for setting cached result
-func (f *Fibber) SyncSetCache(n uint64, fib uint64) {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
+func (f *Fibber) testInit() {
+	f.cache = make(map[uint64]uint64)
+	f.cache[0] = 0
+	f.cache[1] = 1
+	f.maxN = 1
+	f.maxFib = 1
+}
 
-	f.cache[n] = fib
-	if n > f.maxN {
-		f.maxN = n
-		f.maxFib = fib
+// setCacheNew should only be used inside synchronized code
+// It should be called only when setting a new cache value
+func (f *Fibber) setCacheNew(n, x uint64) {
+	f.cache[n] = x
+	if f.DB == nil {
+		return
 	}
+
+	// here, golang's internal scheduler is being used as the queue for writing to the database
+	go f.DB.CreateFibonaciEntry(n, x)
 }
 
 // bareExtend should only be used inside synchronized code
@@ -57,7 +88,7 @@ func (f *Fibber) SyncSetCache(n uint64, fib uint64) {
 func (f *Fibber) bareExtend(condition func(uint64) bool) {
 	for i := f.maxN + 1; condition(i); i++ {
 		fib := f.cache[i-1] + f.cache[i-2]
-		f.cache[i] = fib
+		f.setCacheNew(i, fib)
 		f.maxN = i
 		f.maxFib = fib
 	}
